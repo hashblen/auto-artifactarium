@@ -165,6 +165,10 @@ impl GameCommand {
     pub fn parse_proto<T: protobuf::Message>(&self) -> protobuf::Result<T> {
         T::parse_from_bytes(&self.proto_data)
     }
+
+    pub fn parse_header<T: protobuf::Message>(&self) -> protobuf::Result<T> {
+        T::parse_from_bytes(&self.proto_header)
+    }
 }
 
 impl fmt::Debug for GameCommand {
@@ -360,7 +364,7 @@ impl GameSniffer {
             if let Some(possible_seeds) = matches_get_player_token_rsp(command.proto_data.clone(), self.rsa_keys.clone()) {
                 self.possible_seeds = possible_seeds;
                 info!(?self.possible_seeds, "setting new possible session seeds");
-                let header_command = command.parse_proto::<PacketHead>().unwrap();
+                let header_command = command.parse_header::<PacketHead>().unwrap();
                 self.sent_time = Some(header_command.sent_ms);
                 info!(?self.sent_time, "setting new send time");
             }
