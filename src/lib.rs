@@ -112,6 +112,8 @@ pub struct GameCommand {
     pub header_len: u16,
     #[allow(unused)]
     pub data_len: u32,
+    #[allow(unused)]
+    pub proto_header: Vec<u8>,
     pub proto_data: Vec<u8>,
 }
 
@@ -141,12 +143,22 @@ impl GameCommand {
         let header_len = u16::from_be_bytes(bytes[4..6].try_into().unwrap());
         let data_len = u32::from_be_bytes(bytes[6..10].try_into().unwrap());
 
-        let data = bytes[10..10 + data_len as usize + header_len as usize].to_vec();
+        let data_start = 10 + header_len as usize;
+        let data_end = data_start + data_len as usize;
+
+        if data_end > bytes.len() {
+            warn!(len = bytes.len(), "game command buffer too short");
+            return None;
+        }
+
+        let proto_header = bytes[10..data_start].to_vec();
+        let proto_data = bytes[data_start..data_end].to_vec();
         Some(GameCommand {
             command_id,
             header_len,
             data_len,
-            proto_data: data,
+            proto_header,
+            proto_data,
         })
     }
 
