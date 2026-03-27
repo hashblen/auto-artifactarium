@@ -9,6 +9,13 @@ use rsa::{Pkcs1v15Encrypt, RsaPrivateKey};
 use crate::gen::protos::Unk;
 
 pub fn matches_get_player_token_rsp(data: Vec<u8>, rsa_keys: Vec<RsaPrivateKey>) -> Option<Vec<u64>> {
+    // Cut at last "==": token 256 bytes -> 1 modulo 3, so always == at end in base64.
+    let end = data
+        .windows(2)
+        .rposition(|w| w == b"==")
+        .map_or(data.len(), |pos| pos + 2);
+    let data = &data[..end];
+
     let d_msg = Unk::parse_from_bytes(&data);
     match d_msg {
         Ok(d_msg) => {
