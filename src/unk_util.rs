@@ -5,7 +5,7 @@ use base64::prelude::BASE64_STANDARD;
 use protobuf::Message;
 use protobuf::UnknownValueRef::*;
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey};
-
+use tracing::info;
 use crate::gen::protos::Unk;
 
 pub fn matches_get_player_token_rsp(data: Vec<u8>, rsa_keys: Vec<RsaPrivateKey>) -> Option<Vec<u64>> {
@@ -84,7 +84,8 @@ pub fn matches_achievement_all_data_notify(data: Vec<u8>) -> Option<Vec<Achievem
                         let unknown_fields_inside;
                         match d_msg_inside {
                             Ok(d_msg_inside) => {
-                                unknown_fields_inside = d_msg_inside.unknown_fields().clone()
+                                unknown_fields_inside = d_msg_inside.unknown_fields().clone();
+                                if unknown_fields_inside.clone().iter().count() <= 1 { continue }  // Only one field inside -> not Achievement
                             }
                             _ => continue
                         }
@@ -109,6 +110,7 @@ pub fn matches_achievement_all_data_notify(data: Vec<u8>) -> Option<Vec<Achievem
                 }
             }
             if achievement_list.len() == 0 { return None }
+            info!("Collected some possible achievements, trying to find field tags...");
 
             // Now, try to find which field corresponds to the right places
             let mut tag_finish_timestamp = None;
